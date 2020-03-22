@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import glob
@@ -27,6 +27,20 @@ def expandBraces(entry):
     return expandedEntries
 
 
+def get_quot(args):
+    if args.single_quotes:
+        quot = "'"
+    elif args.double_quotes:
+        quot = '"'
+    else:
+        quot = ''
+    return quot
+
+
+def get_print_out(args):
+    return sys.stdout.write if args.single_line else print
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=sys.argv[0])
     parser.add_argument('-s', '--single-line', action='store_true')
@@ -35,20 +49,16 @@ if __name__ == '__main__':
     parser.add_argument('-D', '--delimiter', default=' ')
     parser.add_argument('pattern', nargs='*')
     args = parser.parse_args(sys.argv[1:])
-    if args.single_quotes:
-        quot = "'"
-    elif args.double_quotes:
-        quot = '"'
-    else:
-        quot = ''
-    if args.single_line:
-        print_out = sys.stdout.write
-    else:
-        print_out = print
+    quot = get_quot(args)
+    print_out = get_print_out(args)
     for arg in args.pattern:
         i = 0
         for expanded in expandBraces(arg):
-            for g in glob.glob(expanded):
+            try:
+                globs = glob.glob(expanded)
+            except Exception:
+                globs = glob.glob(glob.escape(expanded))
+            for g in globs:
                 if args.single_line and i > 0:
                     sys.stdout.write(args.delimiter)
                 print_out(quot + g + quot)
